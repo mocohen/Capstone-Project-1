@@ -1,6 +1,6 @@
 
 .ipynb_checkpoints
-
+*.pkl
 .python-version
 
 # Vim
