@@ -3,6 +3,8 @@
 *.pkl
 .python-version
 
+/collect_data/data_files/
+
 # Vim
 # Swap
 [._]*.s[a-v][a-z]
