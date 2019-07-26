@@ -1,8 +1,13 @@
 
 .ipynb_checkpoints
-*.pkl
 .python-version
+*.pyc
 
+# data files
+*.db
+*.pkl
+
+app_tokens.py
 /collect_data/data_files/
 
 # Vim
