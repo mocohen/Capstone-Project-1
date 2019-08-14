@@ -9,6 +9,7 @@ import numpy as np
 import sklearn as sk
 from datetime import timedelta, date, datetime
 from sodapy import Socrata
+import requests
 
 
 # In[2]:
@@ -19,6 +20,7 @@ sys.path.append(os.path.dirname(os.path.abspath('.')))
 import app_tokens
 
 timeout = 120
+max_attempts = 5
 
 opts, args = getopt.getopt(sys.argv[1:], "e:s:t:")
 for opt, arg in opts:
@@ -34,17 +36,6 @@ for opt, arg in opts:
 
 blockface_detail = pd.read_csv('blockface_detail.csv', index_col=0)
 
-
-# In[4]:
-
-
-blockface_detail.info()
-
-
-# In[5]:
-
-
-blockface_detail.head()
 
 
 # In[6]:
@@ -74,6 +65,7 @@ client = Socrata('data.seattle.gov',
                 timeout=timeout)
 
 
+#def fetchData(client, socrata_key, block_key, loop_size):
 
 
 
@@ -86,10 +78,16 @@ for ind, block_key in blockface_detail[start_ind:end_ind]['sourceelementkey'].it
 
     # list of dataframes
     dfs = []
+    
+    # index for returned results
     i = 0
+
+    # set number of attempts for connection
+    num_attempts = 0
+
     #check to see if last record was full or not
-    while loop_size == df_len:
-        #print(i)
+    while loop_size == df_len and num_attempts < max_attempts:
+        results = ''
         print('ind: %d\tkey: %d\trecords read: %.3fMM\telapsed time:%s' % (ind, block_key, i*loop_size/1e6, datetime.now()-starttime), end='\r')
         # fetch results from seattle city server
         try:
@@ -99,44 +97,52 @@ for ind, block_key in blockface_detail[start_ind:end_ind]['sourceelementkey'].it
                              order='occupancydatetime',
                              limit=loop_size,
                              offset=loop_size * i)
-        except:
-            raise SystemExit('\nFailed to connect at index %d, block_key %d' % (ind, block_key))
-        
-        #convert to dataframe
-        df = pd.DataFrame.from_records(results)
+            #reset num_attempts
+            num_attempts = 0
+            #update counter
+            i += 1
+        except requests.exceptions.Timeout:
+            num_attempts += 1 
+            #ensure while loop reruns       
+            df_len = loop_size
 
-        try:
-            # convert to appropriate data types
-            df[num_cols] = df[num_cols].apply(pd.to_numeric)
-            df[['occupancydatetime']] = df[['occupancydatetime']].apply(pd.to_datetime)    
-        except:
-            raise SystemExit('\nFailed format data at index %d, block_key %d' % (ind, block_key))
+        if len(results) > 0:
+            try:
+                #convert to dataframe
+                df = pd.DataFrame.from_records(results)
+                
+                # convert to appropriate data types
+                df[num_cols] = df[num_cols].apply(pd.to_numeric)
+                df[['occupancydatetime']] = df[['occupancydatetime']].apply(pd.to_datetime)    
+                dfs.append(df)
+                
+                 # get length of new dataframe
+                df_len = len(df)
 
-        # get length of new dataframe
-        df_len = len(df)
-        #append dataframe to list of dataframe
-        dfs.append(df)
-        #update counter
-        i += 1
-    
-    results_df = pd.concat(dfs, ignore_index=True).set_index('occupancydatetime')
-    results_df = results_df.resample('15T').mean()
-    results_df.dropna().to_pickle("data_files/2019/2019.%d.pkl" % block_key)    
+            except:
+                print('\ndump dataframe', df.head())
+                print('\ndump DFs', dfs)
+                print('\ndump results', results)
+                raise SystemExit('\nFailed format data at index %d, block_key %d' % (ind, block_key))
+                    #append dataframe to list of dataframe
+    else:
+        # there was an error  - could not get a specific ID
+        if num_attempts >= max_attempts:
+            output_string = 'Failed %d times to connect at index %d, block_key %d' % (num_attempts, ind, block_key)
+            file = open('failed/%d' % block_key, 'w')
+            file.write('ConnectionError\n')
+            file.write(output_string)
+            file.close()
+            print('\n', output_string, '\n')
+            #raise SystemExit()    
+        else:
+            # success
+            # output results
+            results_df = pd.concat(dfs, ignore_index=True).set_index('occupancydatetime')
+            results_df = results_df.resample('15T').mean()
+            results_df.dropna().to_pickle("data_files/2019/2019.%d.pkl" % block_key)    
 
 
-# In[ ]:
-
-
-read = pd.read_pickle('2019.1001.pkl')
-
-
-# In[ ]:
-
-
-read
-
-
-# In[ ]:
 
 
 
