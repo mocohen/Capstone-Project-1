@@ -9,6 +9,7 @@
 
 app_tokens.py
 /collect_data/data_files/
+/collect_data/failed/
 
 # Vim
 # Swap
