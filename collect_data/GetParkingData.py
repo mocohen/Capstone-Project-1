@@ -90,6 +90,7 @@ for ind, block_key in blockface_detail[start_ind:end_ind]['sourceelementkey'].it
         results = ''
         print('ind: %d\tkey: %d\trecords read: %.3fMM\telapsed time:%s' % (ind, block_key, i*loop_size/1e6, datetime.now()-starttime), end='\r')
         # fetch results from seattle city server
+
         try:
             results = client.get(data_ytd,
                              sourceelementkey=block_key, 
@@ -101,6 +102,7 @@ for ind, block_key in blockface_detail[start_ind:end_ind]['sourceelementkey'].it
             num_attempts = 0
             #update counter
             i += 1
+            df_len = len(results)
         except requests.exceptions.Timeout:
             num_attempts += 1 
             #ensure while loop reruns       
@@ -116,8 +118,8 @@ for ind, block_key in blockface_detail[start_ind:end_ind]['sourceelementkey'].it
                 df[['occupancydatetime']] = df[['occupancydatetime']].apply(pd.to_datetime)    
                 dfs.append(df)
                 
-                 # get length of new dataframe
-                df_len = len(df)
+                #  # get length of new dataframe
+                # df_len = len(df)
 
             except:
                 print('\ndump dataframe', df.head())
