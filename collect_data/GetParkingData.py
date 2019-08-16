@@ -18,6 +18,7 @@ import requests
 import os, sys, getopt
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 import app_tokens
+import argparse
 
 
 
@@ -120,19 +121,35 @@ if __name__ == '__main__':
     timeout = 120
     max_attempts = 5
 
-    opts, args = getopt.getopt(sys.argv[1:], "e:s:t:c:")
-    for opt, arg in opts:
-        if opt == '-s':
-            start_ind = int(arg)
-        elif opt == '-e':
-            end_ind = int(arg)
-        elif opt == '-t':
-            timeout = int(arg)
-        elif opt == '-c':
-            csv_file = arg
+    parser = argparse.ArgumentParser(description='Collect parking data from city of seattle through socrata.')
+    parser.add_argument('csv_file', help='csv file with blockface keys', type=str)
+    parser.add_argument('-s', '--start', help='first row to read in the csv (default: 0)', type=int, default=0)
+    parser.add_argument('-e', '--end', help='last row to read in the csv (default: -1)', type=int, default=-1)
+    parser.add_argument('-t', '--timeout', help='number of seconds to wait on request', type=int, default=60)
+    parser.add_argument('-m', '--max_attempts', help='number of requests to attempt before giving up (default:5)', type=int, default=5)
+    parser.add_argument('-n', '--num_records', help='number of records to request at a time (default:1000)', type=int, default=1000)
+
+    args = parser.parse_args()
+    # parser.add_argument('integers', metavar='N', type=int, nargs='+',
+    #                 help='an integer for the accumulator')
+    # parser.add_argument('--sum', dest='accumulate', action='store_const',
+    #                 const=sum, default=max,
+    #                 help='sum the integers (default: find the max)')
 
 
-    blockface_detail = pd.read_csv(csv_file, index_col=0)
+    # opts, args = getopt.getopt(sys.argv[1:], "e:s:t:c:")
+    # for opt, arg in opts:
+    #     if opt == '-s':
+    #         start_ind = int(arg)
+    #     elif opt == '-e':
+    #         end_ind = int(arg)
+    #     elif opt == '-t':
+    #         timeout = int(arg)
+    #     elif opt == '-c':
+    #         csv_file = arg
+
+
+    blockface_detail = pd.read_csv(args.csv_file, index_col=0)
 
 
 
@@ -157,14 +174,14 @@ if __name__ == '__main__':
     # Example authenticated client (needed for non-public datasets):
     client = Socrata('data.seattle.gov',
                      app_tokens.getAppTokens()['seattle_gov'],
-                    timeout=timeout)   
+                    timeout=args.timeout)   
 
     fetchData(
         client = client, 
         socrata_key = data_ytd, 
-        block_series = blockface_detail[start_ind:end_ind]['sourceelementkey'], 
-        loop_size = 1000, 
-        max_attempts = max_attempts,
+        block_series = blockface_detail[args.start:args.end]['sourceelementkey'], 
+        loop_size = args.num_records, 
+        max_attempts = args.max_attempts,
         )
     print('\nCompleted %d key(s) in %s' % (end_ind - start_ind, datetime.now()-start_time)) 
 
