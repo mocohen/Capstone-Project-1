@@ -109,10 +109,15 @@ def fetchData(client, socrata_key, block_series, loop_size, max_attempts):
             else:
                 # success
                 # output results
-                results_df = pd.concat(dfs, ignore_index=True).set_index('occupancydatetime')
-                results_df = results_df.resample('15T').mean()
-                results_df.dropna().to_pickle("data_files/2019/2019.%d.pkl" % block_key)    
-
+                try:
+                    results_df = pd.concat(dfs, ignore_index=True).set_index('occupancydatetime')
+                    results_df = results_df.resample('15T').mean()
+                    results_df.dropna().to_pickle("data_files/2019/2019.%d.pkl" % block_key)    
+                except ValueError:
+                    if len(dfs) != 0:
+                        raise SystemExit('\nFailed to concat index %d, block_key %d' % (ind, block_key))
+                    else:
+                        print('\nNo results for index %d, block_key %d, continuing...\n' % (ind, block_key))
 
 
 if __name__ == '__main__':
