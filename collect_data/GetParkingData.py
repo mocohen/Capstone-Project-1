@@ -53,7 +53,7 @@ def fetchData(client, socrata_key, block_series, loop_size, max_attempts):
 
             try:
                 # fetch results from seattle city server
-                results = client.get(data_ytd,
+                results = client.get(socrata_key,
                                  sourceelementkey=block_key, 
                                  select='occupancydatetime,paidoccupancy',
                                  order='occupancydatetime',
@@ -183,6 +183,6 @@ if __name__ == '__main__':
         loop_size = args.num_records, 
         max_attempts = args.max_attempts,
         )
-    print('\nCompleted %d key(s) in %s' % (end_ind - start_ind, datetime.now()-start_time)) 
+    print('\nCompleted %d key(s) in %s' % (args.end - args.start, datetime.now()-start_time)) 
 
 
