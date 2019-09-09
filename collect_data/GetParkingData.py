@@ -30,7 +30,7 @@ def fetchData(client, socrata_key, block_series, loop_size, max_attempts):
 
 
     # columns that are numeric in fetched results
-    num_cols = ['paidoccupancy',]
+    num_cols = ['paidoccupancy','parkingspacecount']
 
     for ind, block_key in block_series.iteritems():
         
@@ -55,7 +55,7 @@ def fetchData(client, socrata_key, block_series, loop_size, max_attempts):
                 # fetch results from seattle city server
                 results = client.get(socrata_key,
                                  sourceelementkey=block_key, 
-                                 select='occupancydatetime,paidoccupancy',
+                                 select='occupancydatetime,paidoccupancy,parkingspacecount',
                                  order='occupancydatetime',
                                  limit=loop_size,
                                  offset=loop_size * i)
@@ -112,7 +112,7 @@ def fetchData(client, socrata_key, block_series, loop_size, max_attempts):
                 try:
                     results_df = pd.concat(dfs, ignore_index=True).set_index('occupancydatetime')
                     results_df = results_df.resample('15T').mean()
-                    results_df.dropna().to_pickle("data_files/2019/2019.%d.pkl" % block_key)    
+                    results_df.dropna().to_pickle("data_files/%s/%s.%d.pkl" % (socrata_key, socrata_key, block_key)) 
                 except ValueError:
                     if len(dfs) != 0:
                         raise SystemExit('\nFailed to concat index %d, block_key %d' % (ind, block_key))
@@ -133,6 +133,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--timeout', help='number of seconds to wait on request', type=int, default=60)
     parser.add_argument('-m', '--max_attempts', help='number of requests to attempt before giving up (default:5)', type=int, default=5)
     parser.add_argument('-n', '--num_records', help='number of records to request at a time (default:1000)', type=int, default=1000)
+    parser.add_argument('-k', '--key', help='socrata key for parking data (default: 2019)', type=str, default='2019')
 
     args = parser.parse_args()
     # parser.add_argument('integers', metavar='N', type=int, nargs='+',
@@ -162,11 +163,22 @@ if __name__ == '__main__':
     #data is delayed 48 hrs
     # socrata data keys for parking data
     #2019 ytd
+
+    socrata_keys = {'2018':'6yaw-2m8q',
+                    '2019':'qktt-2bsy',
+                    'month':'rke9-rsvs',
+                    'day': 'hiyf-7edq',
+                    }
+
     data_ytd = 'qktt-2bsy'
     #last 30 days
     data_mtd = 'rke9-rsvs'
     # last 48 hours
     data_48hrs = 'hiyf-7edq'
+
+    data_dir = './data_files/%s' % socrata_keys[args.key]
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
 
 
     # In[ ]:
@@ -183,7 +195,7 @@ if __name__ == '__main__':
 
     fetchData(
         client = client, 
-        socrata_key = data_ytd, 
+        socrata_key = socrata_keys[args.key], 
         block_series = blockface_detail[args.start:args.end]['sourceelementkey'], 
         loop_size = args.num_records, 
         max_attempts = args.max_attempts,
