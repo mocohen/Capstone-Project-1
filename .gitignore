@@ -10,6 +10,7 @@
 app_tokens.py
 /collect_data/data_files/
 /collect_data/failed/
+/validate_data/
 
 # Vim
 # Swap
@@ -18,3 +19,6 @@ app_tokens.py
 [._]s[a-rt-v][a-z]
 [._]ss[a-gi-z]
 [._]sw[a-p]
+
+
+**/.DS_Store
