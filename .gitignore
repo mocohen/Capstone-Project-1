@@ -8,8 +8,8 @@
 *.pkl
 
 app_tokens.py
-/collect_data/data_files/
-/collect_data/failed/
+/1.collect_data/data_files/
+/1.collect_data/failed/
 /validate_data/
 
 # Vim
