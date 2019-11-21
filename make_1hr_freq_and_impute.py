@@ -32,8 +32,7 @@ df.head()
 # In[188]:
 
 
-# make a new column for percent of occupied spaces
-df['PercentOccupied'] = df['PaidOccupancy']/df['ParkingSpaceCount']
+
 #df['PercentOccupied'] = df['PercentOccupied'].clip(None, 1)
 
 
@@ -68,7 +67,7 @@ for i, block_ind in enumerate(blocks):
             max_hour = current_year.index.hour.max()
             min_hour = current_year.index.hour.min()
 
-            current_year = current_year.resample(rule='15min').mean()
+            current_year = current_year.resample(rule='H').mean()
 
             # remove non paying hours:
             current_year = current_year.iloc[current_year.index.indexer_between_time('%d:00:00' % min_hour, 
@@ -94,7 +93,7 @@ for i, block_ind in enumerate(blocks):
             # Fill nans with mean by time of day
             mask = current_year.PaidOccupancy.isna()
 
-            filled_by_mean = current_year.groupby([current_year.index.hour, current_year.index.minute]).transform(lambda x: x.fillna(x.mean()))
+            filled_by_mean = current_year.groupby([current_year.index.hour]).transform(lambda x: x.fillna(x.mean()))
 
             # this will show the values that were replaced
             #filled_by_mean[mask]
@@ -110,10 +109,11 @@ for i, block_ind in enumerate(blocks):
 
 
 all_dfs = pd.concat(all_block_dfs)
-
+# make a new column for percent of occupied spaces
+all_dfs['PercentOccupied'] = all_dfs['PaidOccupancy']/all_dfs['ParkingSpaceCount']
 
 # In[ ]:
 
 
 #all_dfs.to_pickle('1.collect_data/data_files/15min.pkl')
-all_dfs.to_pickle('1.collect_data/data_files/15min_impute_by_hour.pkl')
+all_dfs.to_pickle('1.collect_data/data_files/1hr.pkl')
