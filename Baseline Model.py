@@ -6,6 +6,9 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 import matplotlib.pyplot as plt
 from pmdarima import auto_arima
 import pickle
+
+import os.path
+from os import path
 # %matplotlib inline
 
 # !ls 1.collect_data/
@@ -15,7 +18,7 @@ blockface_detail = pd.read_csv('1.collect_data/blockface_detail.csv')
 blockface_detail_locs = blockface_detail[['latitude', 'longitude', 'sourceelementkey']]
 blockface_detail_locs.head()
 
-df = pd.read_pickle('1.collect_data/data_files/1hr.pkl').replace([np.inf, -np.inf], np.nan).dropna()
+df = pd.read_pickle('1.collect_data/data_files/1hr_1block-average.pkl').replace([np.inf, -np.inf], np.nan).dropna()
 
 df.head()
 
@@ -162,11 +165,12 @@ from pmdarima.arima import ARIMA
 
 for block in blockface_detail.sourceelementkey.values[args.start:args.end]:
   print('\n\nblock %d\n\n' % block)
+  filename = 'arima_results3/arima.%d.pkl' % block
   mask = (df['SourceElementKey'] == block) & (df['OccupancyDateTime'] > ('2019-01-01'))
 
   curr = df[mask]
   pct_occupied = curr.PercentOccupied
-  if len(pct_occupied) > 0:
+  if len(pct_occupied) > 0 and not path.exists(filename):
 
     num_split = int(.7*len(pct_occupied))
     oob_length = int(0.2*len(pct_occupied))
@@ -177,16 +181,16 @@ for block in blockface_detail.sourceelementkey.values[args.start:args.end]:
     tr, tt = pct_occupied.iloc[:num_split], pct_occupied.iloc[num_split:]
 
     mdl = auto_arima(tr, error_action='ignore', trace=True,
-                         start_p=1, start_q=1, start_P=1, start_Q=1,
+                         start_p=2, start_q=2, start_P=2, start_Q=2,
                          max_p=10, max_q=10, max_P=10, max_Q=10,
-                         max_d=2, max_D=2, out_of_sample_size=oob_length, 
+                         d=0, D=0, out_of_sample_size=oob_length, 
                          max_order=None, information_criterion='oob',
                           seasonal=True, m=time_chunks_per_day)
 
-    with open('arima.%d.pkl' % block, 'wb') as pkl:
+    with open(filename, 'wb') as pkl:
         pickle.dump(mdl, pkl)
   else:
-    print('no vals')
+    print('no vals or already ran')
 
   # preds, conf_int = mdl.predict(n_periods=tt.shape[0], return_conf_int=True)
 
