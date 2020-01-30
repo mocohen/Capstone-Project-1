@@ -12,6 +12,7 @@ app_tokens.py
 /1.collect_data/failed/
 /validate_data/
 /arima_results*/
+/batch_arima_results/
 
 # Vim
 # Swap
