@@ -112,12 +112,35 @@ def fetchData(client, socrata_key, block_series, loop_size, max_attempts):
                 try:
                     results_df = pd.concat(dfs, ignore_index=True).set_index('occupancydatetime')
                     results_df = results_df.resample('15T').mean()
-                    results_df.dropna().to_pickle("data_files/%s/%s.%d.pkl" % (socrata_key, socrata_key, block_key)) 
+                    results_df.dropna().to_pickle("../data/%s/%s.%d.pkl" % (socrata_key, socrata_key, block_key)) 
                 except ValueError:
                     if len(dfs) != 0:
                         raise SystemExit('\nFailed to concat index %d, block_key %d' % (ind, block_key))
                     else:
                         print('\nNo results for index %d, block_key %d, continuing...\n' % (ind, block_key))
+
+
+# Format data if downloaded in csv format
+def formatArchivedData():
+    dtypes = {'OccupancyDateTime': 'str', 'SourceElementKey': 'int', 'ParkingSpaceCount': 'float', 'PaidOccupancy': 'int'}
+
+    years = range(2012,2020)
+
+    for year in years:
+        print(year)
+        df = pd.read_csv('../data/%d_Paid_Parking_Occupancy__Year-to-date_.csv' % year, 
+                             #header=None,
+                             #usecols=[0,1,4,6],
+                             #names=['OccupancyDateTime', 'PaidOccupancy', 'SourceElementKey', 'ParkingSpaceCount'],
+                                 index_col = ['SourceElementKey', 'OccupancyDateTime'],
+                                 usecols = ['OccupancyDateTime', 'SourceElementKey', 'PaidOccupancy', 'ParkingSpaceCount'],  
+                                dtype=dtypes,
+                                parse_dates=['OccupancyDateTime'])
+
+
+        df.sort_index(level=['SourceElementKey', 'OccupancyDateTime'], inplace=True)
+        df.to_pickle('../data/%d.pkl' % year)
+
 
 
 if __name__ == '__main__':
@@ -160,7 +183,7 @@ if __name__ == '__main__':
     # last 48 hours
     data_48hrs = 'hiyf-7edq'
 
-    data_dir = './data_files/%s' % socrata_keys[args.key]
+    data_dir = '../data/%s' % socrata_keys[args.key]
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
