@@ -136,23 +136,7 @@ if __name__ == '__main__':
     parser.add_argument('-k', '--key', help='socrata key for parking data (default: 2019)', type=str, default='2019')
 
     args = parser.parse_args()
-    # parser.add_argument('integers', metavar='N', type=int, nargs='+',
-    #                 help='an integer for the accumulator')
-    # parser.add_argument('--sum', dest='accumulate', action='store_const',
-    #                 const=sum, default=max,
-    #                 help='sum the integers (default: find the max)')
 
-
-    # opts, args = getopt.getopt(sys.argv[1:], "e:s:t:c:")
-    # for opt, arg in opts:
-    #     if opt == '-s':
-    #         start_ind = int(arg)
-    #     elif opt == '-e':
-    #         end_ind = int(arg)
-    #     elif opt == '-t':
-    #         timeout = int(arg)
-    #     elif opt == '-c':
-    #         csv_file = arg
 
 
     blockface_detail = pd.read_csv(args.csv_file, index_col=0)
