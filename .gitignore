@@ -9,7 +9,7 @@ app_tokens.py
 /validate_data/
 /arima_results*/
 /batch_arima_results/
-
+/models
 
 
 
